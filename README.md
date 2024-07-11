@@ -1,2 +1,2 @@
 # GraphicsConfig
-Plugin to save/load graphical settings
+Does... something, I'm sure!
