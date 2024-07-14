@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
 using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
+using Lumina.Excel.GeneratedSheets;
 
 namespace GraphicsConfig
 {
@@ -39,71 +40,79 @@ namespace GraphicsConfig
             List<string> Presets = new List<string>{ "None" };
             Presets.AddRange(Plugin.GetPresets());
 
-            ImGui.Text("Saving a preset: \"/gsave PresetName\"\nLoading a preset: \"/gload PresetName\"\nListing presets: \"/glist\"");
-            ImGui.Text("The plugin will enable the specified presets\nwhen the condition begins (Like entering combat\nor a cutscene) and revert to the default preset\nafter (like killing the enemy or finishing the\ncutscene). If you don't want to use a preset for\nany of these, just select none for each condition.");
+            ImGui.Text("Usage: Go to your System Settings -> Graphic Settings\nand set them how you'd like the preset to be, then use the\ncommands below to save and then load them whenever you like.");
+            ImGui.Text("Saving a preset: \"/gsave PresetName\"\nLoading a preset: \"/gload PresetName\"\nListing presets: \"/glist\"\nOpen this window: \"/gconfig\"");
+            ImGui.Text("The options below will enable the specified presets when the\ncondition begins (Like entering combat or a cutscene) and revert\nto the default preset after (like killing the enemy or finishing the\ncutscene). If you don't want to use a preset for any of these, just\nselect none for each condition.");
             
             ImGui.Text("Default:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("DefaultPreset", Plugin.PluginConfig.DefaultPreset, 150, out Plugin.PluginConfig.DefaultPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("DefaultPreset", Plugin.PluginConfig.DefaultPreset, 200, out Plugin.PluginConfig.DefaultPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("In Duty:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("InDutyPreset", Plugin.PluginConfig.InDutyPreset, 150, out Plugin.PluginConfig.InDutyPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("InDutyPreset", Plugin.PluginConfig.InDutyPreset, 200, out Plugin.PluginConfig.InDutyPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Crafting:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("CraftingPreset", Plugin.PluginConfig.CraftingPreset, 150, out Plugin.PluginConfig.CraftingPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("CraftingPreset", Plugin.PluginConfig.CraftingPreset, 200, out Plugin.PluginConfig.CraftingPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Editing Character:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("EditingCharacterPreset", Plugin.PluginConfig.EditingCharacterPreset, 150, out Plugin.PluginConfig.EditingCharacterPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("EditingCharacterPreset", Plugin.PluginConfig.EditingCharacterPreset, 200, out Plugin.PluginConfig.EditingCharacterPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Gathering:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("GatheringPreset", Plugin.PluginConfig.GatheringPreset, 150, out Plugin.PluginConfig.GatheringPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("GatheringPreset", Plugin.PluginConfig.GatheringPreset, 200, out Plugin.PluginConfig.GatheringPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("In Combat:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("CombatPreset", Plugin.PluginConfig.CombatPreset, 150, out Plugin.PluginConfig.CombatPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("CombatPreset", Plugin.PluginConfig.CombatPreset, 200, out Plugin.PluginConfig.CombatPreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Bard Performance:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("PerformancePreset", Plugin.PluginConfig.PerformancePreset, 150, out Plugin.PluginConfig.PerformancePreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("PerformancePreset", Plugin.PluginConfig.PerformancePreset, 200, out Plugin.PluginConfig.PerformancePreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Cutscene or Gpose:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("WatchingCutscenePreset", Plugin.PluginConfig.WatchingCutscenePreset, 150, out Plugin.PluginConfig.WatchingCutscenePreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("WatchingCutscenePreset", Plugin.PluginConfig.WatchingCutscenePreset, 200, out Plugin.PluginConfig.WatchingCutscenePreset, Presets);
+            ImGui.Unindent(200);
             
             ImGui.Text("Device unplugged:");
             ImGui.SameLine();
-            ImGui.Indent(130);
-            DrawComboBox("UnpluggedPreset", Plugin.PluginConfig.UnpluggedPreset, 150, out Plugin.PluginConfig.UnpluggedPreset, Presets);
-            ImGui.Unindent(130);
+            ImGui.Indent(200);
+            DrawComboBox("UnpluggedPreset", Plugin.PluginConfig.UnpluggedPreset, 200, out Plugin.PluginConfig.UnpluggedPreset, Presets);
+            ImGui.Unindent(200);
+
+            if (!Plugin.PluginConfig.SavedOnce)
+            {
+
+                ImGui.Text("Once you hit save, this window will no longer pop up when you\nenable the plugin, and you can bring it back by typing /gconfig.");
+            }
 
             if (ImGui.Button("Save"))
             {
                 Plugin.PluginConfig.Save();
                 this.IsVisible = false;
+                Plugin.PluginConfig.SavedOnce = true;
             }
 
             ImGui.SameLine();
-            ImGui.Indent(100);
+            ImGui.Indent(200);
 
             if (ImGui.Button("Want to help support my work?"))
             {
@@ -113,7 +122,7 @@ namespace GraphicsConfig
 
             if (ShowSupport)
             {
-                ImGui.Indent(-100);
+                ImGui.Indent(-200);
                 ImGui.Text("Here are the current ways you can support the work I do.\nEvery bit helps, thank you! Have a great day!");
                 ImGui.PushStyleColor(ImGuiCol.Button, new System.Numerics.Vector4(0.19f, 0.52f, 0.27f, 1));
                 if (ImGui.Button("Donate via Paypal"))
