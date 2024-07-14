@@ -1,25 +1,22 @@
-﻿using Dalamud.Game;
-using Dalamud.Game.Config;
+﻿using BatteryGauge.Battery;
+using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using GraphicsConfig.Classes;
+using ImGuiNET;
+using Microsoft.Win32;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Xml;
-using Veda;
-using GraphicsConfig.Classes;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using System.Xml.Linq;
-using Newtonsoft.Json;
-using System.IO;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using System.Reflection;
+using Veda;
 using static Veda.Functions;
 
 namespace GraphicsConfig
@@ -30,17 +27,11 @@ namespace GraphicsConfig
 
         [PluginService] public static IDalamudPluginInterface PluginInterface { get; set; }
         [PluginService] public static ICommandManager Commands { get; set; }
-        [PluginService] public static ICondition Conditions { get; set; }
-        [PluginService] public static IDataManager Data { get; set; }
         [PluginService] public static IFramework Framework { get; set; }
-        [PluginService] public static IGameGui GameGui { get; set; }
-        [PluginService] public static ISigScanner SigScanner { get; set; }
-        [PluginService] public static IKeyState KeyState { get; set; }
         [PluginService] public static IChatGui Chat { get; set; }
-        [PluginService] public static IClientState ClientState { get; set; }
-        [PluginService] public static IPartyList PartyList { get; set; }
         [PluginService] public static IPluginLog PluginLog { get; set; }
         [PluginService] public static IGameConfig GameConfig { get; set; }
+        [PluginService] public static ICondition Condition { get; set; }
 
         public static Configuration PluginConfig { get; set; }
         private PluginCommandManager<Plugin> CommandManager;
@@ -53,13 +44,13 @@ namespace GraphicsConfig
         private readonly Stopwatch sw = new();
         private static uint Delay = 0;
         public static bool IsDebug = true;
+        public static readonly CancellationTokenSource BatteryCheckingTask = new();
+        public static bool PreviouslyCharging = false;
 
-        public Plugin(IDalamudPluginInterface pluginInterface, IChatGui chat, IPartyList partyList, ICommandManager commands, ISigScanner sigScanner)
+        public Plugin(IDalamudPluginInterface pluginInterface, IChatGui chat, IPartyList partyList, ICommandManager commands, ICondition conditions)
         {
             PluginInterface = pluginInterface;
-            PartyList = partyList;
             Chat = chat;
-            SigScanner = sigScanner;
 
             // Get or create a configuration object
             PluginConfig = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -73,16 +64,301 @@ namespace GraphicsConfig
                 ui.IsVisible = !ui.IsVisible;
             };
 
+            ui.IsVisible = true;
+            
             if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
 
             // Load all of our commands
             CommandManager = new PluginCommandManager<Plugin>(this, commands);
 
-            Functions.GetChatSignatures(sigScanner);
-
             Framework.Update += OnFrameworkUpdate;
 
-            GameConfig.Changed += ConfigChange;
+            conditions.ConditionChange += ConditionChanged;
+
+            PreviouslyCharging = SystemPower.IsCharging;
+
+            if (PluginConfig.UnpluggedPreset != "None")
+            {
+                Task.Run(async () =>
+                {
+                    while (!BatteryCheckingTask.Token.IsCancellationRequested)
+                    {
+                        CheckBattery();
+
+                        await Task.Delay(5000, BatteryCheckingTask.Token);
+                    }
+                }, BatteryCheckingTask.Token);
+            }
+        }
+
+        public static void CheckBattery()
+        {
+            if (SystemPower.IsCharging)
+            {
+                if(!PreviouslyCharging)
+                {
+                    //It is now charging, it was not before
+                    if (PluginConfig.DefaultPreset != "None")
+                    {
+                        if (IsDebug) { Print("Default preset loaded because you plugged your device in"); }
+                        ApplyConfig(PluginConfig.DefaultPreset);
+                    }
+                    PreviouslyCharging = SystemPower.IsCharging;
+                }
+
+                //if (SystemPower.ChargePercentage == 100 && PluginConfig.HideWhenFull)
+                //{
+                //    _barEntry.Text = "";
+                //    _barEntry.Tooltip = "Battery fully charged.";
+                //    return;
+                //}
+
+                //_barEntry.Text = PluginConfig.ChargingDisplayMode switch
+                //{
+                //    ChargingDisplayMode.Hide => "",
+                //    ChargingDisplayMode.PercentageOnly => $"{SystemPower.ChargePercentage}%",
+                //    ChargingDisplayMode.TextOnly => "Charging",
+                //    ChargingDisplayMode.TextPercentage => $"Charging ({SystemPower.ChargePercentage}%)",
+                //    _ => throw new ArgumentOutOfRangeException()
+                //};
+
+                //_barEntry.Tooltip = $"Battery is charging.\nCurrent percentage: {SystemPower.ChargePercentage}%";
+            }
+            else
+            {
+                if (PreviouslyCharging)
+                {
+                    //It is now unplugged, it was not before
+                    if (PluginConfig.UnpluggedPreset != "None")
+                    {
+                        if (IsDebug) { Print("Unplugged preset loaded because you unplugged your device"); }
+                        ApplyConfig(PluginConfig.UnpluggedPreset);
+                    }
+                    PreviouslyCharging = SystemPower.IsCharging;
+                }
+                //System is not plugged in
+
+                //var lifetime = TimeUtil.GetPrettyTimeFormat(SystemPower.LifetimeSeconds);
+
+                //_barEntry.Text = _pluginConfig.DischargingDisplayMode switch
+                //{
+                //    DischargingDisplayMode.Hide => "",
+                //    DischargingDisplayMode.PercentageOnly => $"{SystemPower.ChargePercentage}%",
+                //    DischargingDisplayMode.RuntimeOnly => lifetime,
+                //    DischargingDisplayMode.PercentageRuntime => $"{SystemPower.ChargePercentage}% ({lifetime})",
+                //    _ => throw new ArgumentOutOfRangeException()
+                //};
+
+                //_barEntry.Tooltip = $"Battery is discharging.\n" +
+                //                         $"Current percentage: {SystemPower.ChargePercentage}%\n" +
+                //                         $"Remaining life: {lifetime}";
+            }
+        }
+
+        public void ConditionChanged(ConditionFlag flag, bool value)
+        {
+            //return
+            //Have a string option that stores the name of the preset to use in each case (or "none" for don't change it)
+            //Have a dropbox next to each condition that lists the current presets
+            switch (flag)
+            {
+                //case ConditionFlag.BetweenAreas:
+                //    if (value)
+                //    {
+                //        if (IsDebug) Print("Cutscene started");
+                //        ApplyConfig("min");
+                //    }
+                //    else
+                //    {
+                //        if (IsDebug) Print("Cutscene ended");
+                //        ApplyConfig("max");
+                //    }
+                //    break;
+                case ConditionFlag.BoundByDuty:
+                case ConditionFlag.BoundByDuty56:
+                case ConditionFlag.BoundByDuty95:
+                case ConditionFlag.BoundToDuty97:
+                    if (value)
+                    {
+                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.InDutyPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.InDutyPreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+
+                //case ConditionFlag.ChocoboRacing:
+                //    if (value)
+                //    {
+                //        if (IsDebug) Print("Flag started");
+                //        ApplyConfig("FlagStarted");
+                //    }
+                //    else
+                //    {
+                //        if (IsDebug) Print("Flag ended");
+                //        ApplyConfig(PluginConfig.DefaultPreset);
+                //    }
+                //    break;
+
+                case ConditionFlag.Crafting:
+                case ConditionFlag.Crafting40:
+                case ConditionFlag.PreparingToCraft:
+
+                    if (value)
+                    {
+                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.CraftingPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.CraftingPreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+
+                case ConditionFlag.CreatingCharacter: //Does this include with Fantasia?
+                    if (value)
+                    {
+                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.EditingCharacterPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.EditingCharacterPreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+
+                //case ConditionFlag.EditingPortrait:
+                //    if (value)
+                //    {
+                //        if (IsDebug) Print("Flag started");
+                //        ApplyConfig("FlagStarted");
+                //    }
+                //    else
+                //    {
+                //        if (IsDebug) Print("Flag ended");
+                //        ApplyConfig(PluginConfig.DefaultPreset);
+                //    }
+                //    break;
+
+                case ConditionFlag.Fishing:
+                case ConditionFlag.Gathering:
+                case ConditionFlag.Gathering42:
+                    if (value)
+                    {
+                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.GatheringPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.GatheringPreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+
+                case ConditionFlag.InCombat:
+                    if (!Condition[ConditionFlag.BoundByDuty] && !Condition[ConditionFlag.BoundByDuty56] && !Condition[ConditionFlag.BoundByDuty95])
+                    {
+                        if (value)
+                        {
+                            if (IsDebug) Print("Flag started");
+                            if (PluginConfig.CombatPreset != "None")
+                            {
+                                ApplyConfig(PluginConfig.CombatPreset);
+                            }
+                        }
+                        else
+                        {
+                            if (IsDebug) Print("Flag ended");
+                            if (PluginConfig.DefaultPreset != "None")
+                            {
+                                ApplyConfig(PluginConfig.DefaultPreset);
+                            }
+                        }
+                    }
+                    break;
+
+                //case ConditionFlag.InDeepDungeon:
+                //    if (value)
+                //    {
+                //        if (IsDebug) Print("Flag started");
+                //        ApplyConfig("FlagStarted");
+                //    }
+                //    else
+                //    {
+                //        if (IsDebug) Print("Flag ended");
+                //        ApplyConfig(PluginConfig.DefaultPreset);
+                //    }
+                //    break;
+
+                case ConditionFlag.Performing: //Bard Performance
+                    if (value)
+                    {
+                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.PerformancePreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.PerformancePreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+
+                case ConditionFlag.WatchingCutscene:
+                case ConditionFlag.WatchingCutscene78:
+                case ConditionFlag.OccupiedInCutSceneEvent:
+                    if (value)
+                    {
+                        if (IsDebug) Print("Cutscene started");
+                        if (PluginConfig.WatchingCutscenePreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.WatchingCutscenePreset);
+                        }
+                    }
+                    else
+                    {
+                        if (IsDebug) Print("Cutscene ended");
+                        if (PluginConfig.DefaultPreset != "None")
+                        {
+                            ApplyConfig(PluginConfig.DefaultPreset);
+                        }
+                    }
+                    break;
+            }
         }
 
         private void OnFrameworkUpdate(IFramework framework)
@@ -124,18 +400,8 @@ namespace GraphicsConfig
             }
         }
 
-        public void ConfigChange(object? sender, ConfigChangeEvent e)
-        {
-            if (e.Option.ToString() != "CameraZoom" && e.Option.ToString() != "ChatType")
-            {
-                Chat.Print("Setting: " + e.Option.ToString());
-                GameConfig.System.TryGetUInt(e.Option.ToString(), out uint TestVariable);
-                Chat.Print("Changed to: " + TestVariable.ToString());
-            }
-        }
-
         [Command("/gconfig")]
-        [HelpMessage("Shows GraphicsConfig configuration options")]
+        [HelpMessage("Shows Graphics Config configuration options")]
         public void ShowTwitchOptions(string command, string args)
         {
             ui.IsVisible = !ui.IsVisible;
@@ -145,49 +411,57 @@ namespace GraphicsConfig
         [HelpMessage("List all graphical presets")]
         public unsafe void ListPresets(string command, string args)
         {
-            //Get the current settings and save it to a JSON, overwriting if they specify /y or something
-            
+            string FinalMessage = "Available presets saved on your device:" + Environment.NewLine;
+            if (GetPresets().Count() == 0)
+            {
+                Print("You don't have any presets! Type \"/gsave PresetName\" to save one.", ColorType.Info);
+                return;
+            }
+            foreach (string PresetName in GetPresets())
+            {
+                FinalMessage += "\"" + PresetName + "\", ";
+            }
+            Print(FinalMessage.Remove(FinalMessage.Length - 2, 2), ColorType.Info);
         }
 
         [Command("/gsave")]
         [HelpMessage("Save current settings as a graphical preset")]
         public unsafe void SavePreset(string command, string args)
         {
-            if(String.IsNullOrWhiteSpace(args)) { Chat.PrintError("Error: Please provide a filename for the preset."); return; }
+            if (args.ToLower() == "none") { Print("You cannot name a preset that. Stop trying to break the plugin. >:|", ColorType.Error); return; }
+            args = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(args.ToLower());
+            if (String.IsNullOrWhiteSpace(args)) { Chat.PrintError("Error: Please provide a filename for the preset."); return; }
             //Get the current settings and save it to a JSON, overwriting if they specify /y or something
-            //if(args.Contains(" ")) { Chat.PrintError("Error: Presets cannot have spaces in their names."); return; }
-            //if (args.Contains(" /y"))
             WriteGraphicalPreset(args);
+            Print("Saved the \"" + args + "\" graphical preset.", ColorType.Success);
         }
 
         [Command("/gload")]
         [HelpMessage("Load previously saved graphical preset")]
         public unsafe void LoadPreset(string command, string args)
         {
+            if (args.ToLower() == "none") { Print("This is not a valid preset name. Stop trying to break the plugin. >:|", ColorType.Error); return; }
+            args = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(args.ToLower());
+            if (String.IsNullOrWhiteSpace(args)) { Chat.PrintError("Error: Please provide a filename for the preset."); return; }
             //Make a new configuration object, load the JSON object from the file as a <GraphicalConfiguration>
             //Then apply it to the current thing
             ApplyConfig(args);
+            Print("Loaded the \"" + args + "\" graphical preset.", ColorType.Success);
         }
 
-        [Command("/gtest")]
-        [HelpMessage("Does stuff")]
-        public async void TestSettings(string command, string args)
+        public static List<string> GetPresets()
         {
-            //switch (GetSetting(GraphicalConfigurationStrings.GraphicsRezoUpscaleType))
-            //{
-            //    case GraphicsUpscaling.AMD_FSR:
-            //        SaveSetting(GraphicalConfigurationStrings.GraphicsRezoUpscaleType, GraphicsUpscaling.NVIDIA_DLSS);
-            //        break;
-            //    case GraphicsUpscaling.NVIDIA_DLSS:
-            //        SaveSetting(GraphicalConfigurationStrings.GraphicsRezoUpscaleType, GraphicsUpscaling.AMD_FSR);
-            //        break;
-            //}
-            GetCurrentConfig();
+            FileInfo[] Files = new DirectoryInfo(@"graphical-presets").GetFiles("*.json", SearchOption.TopDirectoryOnly); //Assuming Test is your Folder
+            List<string> presets = new List<string>();
+            foreach (FileInfo File in Files)
+            {
+                presets.Add(File.Name.Replace(".json", ""));
+            }
+            return presets;
         }
 
         public static void ApplySetting(string SettingToModify, uint NewValue)
         {
-            //if (IsDebug) Chat.Print("Changing " + SettingToModify + " to " + NewValue);
             GameConfig.System.Set(SettingToModify, NewValue);
         }
 
@@ -196,22 +470,16 @@ namespace GraphicsConfig
             return GameConfig.System.GetUInt(SettingToGet);
         }
 
-
         public static GraphicalConfiguration ReadGraphicalPreset(string PresetName)
         {
             try
             {
                 if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
-                PresetName = "graphical-presets\\" + PresetName.ToLower() + ".json";
+                PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
                 if (!File.Exists(PresetName))
                 {
-                    Chat.PrintError("Couldn't find a graphical preset named \"" + PresetName + "\".");
+                    Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
                     return null;
-                    //GraphicalConfiguration NewData = new GraphicalConfiguration();
-                    //string NewJSON = JsonConvert.SerializeObject(NewData, Newtonsoft.Json.Formatting.Indented);
-
-                    ////write string to file
-                    //System.IO.File.WriteAllText(PresetName, NewJSON);
                 }
 
                 string JSONString = File.ReadAllText(PresetName);
@@ -232,33 +500,14 @@ namespace GraphicsConfig
             try
             {
                 if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
-                PresetName = "graphical-presets\\" + PresetName.ToLower() + ".json";
-                //if (!File.Exists(PresetName))
-                //{
-                    GraphicalConfiguration CurrentConfig = GetCurrentConfig();
-                    string NewJSON = JsonConvert.SerializeObject(CurrentConfig, Newtonsoft.Json.Formatting.Indented);
+                PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
 
-                    //write string to file
-                    System.IO.File.WriteAllText(PresetName, NewJSON);
-                    Chat.Print("[Graphics Config] Preset saved as \"" + PresetName + "\".");
-                    return true;
-                //}
-                //else if(File.Exists(PresetName) && !Overwrite)
-                //{
-                //    Chat.PrintError("[Graphics Config] There is already a preset with the name \"" + PresetName + "\". If you want to overwrite it, make sure to include /y at the end of the command.");
-                //    return false;
-                //}
-                //else if (File.Exists(PresetName) && Overwrite)
-                //{
-                //    GraphicalConfiguration CurrentConfig = GetCurrentConfig();
-                //    string NewJSON = JsonConvert.SerializeObject(CurrentConfig, Newtonsoft.Json.Formatting.Indented);
+                GraphicalConfiguration CurrentConfig = GetCurrentConfig();
+                string NewJSON = JsonConvert.SerializeObject(CurrentConfig, Newtonsoft.Json.Formatting.Indented);
 
-                //    //write string to file
-                //    System.IO.File.WriteAllText(PresetName, NewJSON);
-                //    Chat.Print("[Graphics Config] Preset saved as \"" + PresetName + "\".");
-                //    return true;
-                //}
-                //return false;
+                System.IO.File.WriteAllText(PresetName, NewJSON);
+                //Chat.Print("[Graphics Config] Preset saved as \"" + PresetName + "\".");
+                return true;
             }
             catch (Exception f)
             {
@@ -277,22 +526,11 @@ namespace GraphicsConfig
 
                 foreach (PropertyInfo property in properties)
                 {
-                    //Print("Saving " + property.Name);
                     property.SetValue(CurrentConfig, GetSetting(property.Name));
                 }
-                //foreach (var prop in CurrentConfig.GetType().GetProperties())
-                //{
-                //    Chat.Print("Saving " + prop.Name);
-                //    prop.SetValue(CurrentConfig, 0);
-                //}
-                //Chat.Print("1");
-                //foreach (var prop in CurrentConfig.GetType().GetProperties())
-                //{
-                //    Print(prop.Name + ": " + prop.GetValue(CurrentConfig).ToString());
-                //}
                 return CurrentConfig;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Print(e.ToString(), ColorType.Error);
                 return null;
@@ -310,6 +548,8 @@ namespace GraphicsConfig
             {
                 GraphicalConfiguration CurrentConfig = ReadGraphicalPreset(PresetName);
 
+                if (CurrentConfig == null) { return false; }
+
                 PropertyInfo[] properties = typeof(GraphicalConfiguration).GetProperties();
 
                 foreach (PropertyInfo property in properties)
@@ -317,13 +557,7 @@ namespace GraphicsConfig
                     //Print("Loading/Setting " + property.Name);
                     ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
                 }
-
-                
-
-                //foreach (var prop in CurrentConfig.GetType().GetProperties())
-                //{
-                //    Chat.Print(prop.Name + ": " + prop.GetValue(CurrentConfig).ToString());
-                //}
+                Print("Loaded " + PresetName);
                 return true;
             }
             catch (Exception e)

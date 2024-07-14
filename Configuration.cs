@@ -8,7 +8,16 @@ namespace GraphicsConfig
     public class Configuration : IPluginConfiguration
     {
         public int Version { get; set; }
-        public bool EmptyVariable = false;
+        public string DefaultPreset = "None";
+        public string InDutyPreset = "None";
+        public string CraftingPreset = "None";
+        public string EditingCharacterPreset = "None";
+        public string GatheringPreset = "None";
+        public string CombatPreset = "None";
+        public string PerformancePreset = "None";
+        public string WatchingCutscenePreset = "None";
+        public string UnpluggedPreset = "None";
+        public bool NeedsToSeeTutorial = true;
 
         private IDalamudPluginInterface pluginInterface;
 

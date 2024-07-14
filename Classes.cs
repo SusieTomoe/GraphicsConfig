@@ -158,7 +158,6 @@ namespace GraphicsConfig.Classes
         /// </summary>
         public uint DepthOfField_DX11 { get; set; }
     }
-
     //public class GraphicalConfigurationStrings
     //{
     //    /// <summary>
