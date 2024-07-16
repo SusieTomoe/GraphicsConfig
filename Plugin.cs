@@ -1,12 +1,9 @@
 ﻿using BatteryGauge.Battery;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GraphicsConfig.Classes;
-using ImGuiNET;
-using Microsoft.Win32;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -64,8 +61,8 @@ namespace GraphicsConfig
                 ui.IsVisible = !ui.IsVisible;
             };
 
-            ui.IsVisible = true;
-            
+            ui.IsVisible = !PluginConfig.SavedOnce;
+
             if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
 
             // Load all of our commands
@@ -77,25 +74,26 @@ namespace GraphicsConfig
 
             PreviouslyCharging = SystemPower.IsCharging;
 
-            if (PluginConfig.UnpluggedPreset != "None")
+            //if (PluginConfig.UnpluggedPreset != "None")
+            //{
+            Task.Run(async () =>
             {
-                Task.Run(async () =>
+                while (!BatteryCheckingTask.Token.IsCancellationRequested)
                 {
-                    while (!BatteryCheckingTask.Token.IsCancellationRequested)
-                    {
-                        CheckBattery();
+                    CheckBattery();
 
-                        await Task.Delay(5000, BatteryCheckingTask.Token);
-                    }
-                }, BatteryCheckingTask.Token);
-            }
+                    await Task.Delay(5000, BatteryCheckingTask.Token);
+                }
+            }, BatteryCheckingTask.Token);
+            //}
         }
 
         public static void CheckBattery()
         {
+            if (PluginConfig.UnpluggedPreset == "None") { return; }
             if (SystemPower.IsCharging)
             {
-                if(!PreviouslyCharging)
+                if (!PreviouslyCharging)
                 {
                     //It is now charging, it was not before
                     if (PluginConfig.DefaultPreset != "None")
@@ -446,7 +444,6 @@ namespace GraphicsConfig
             //Make a new configuration object, load the JSON object from the file as a <GraphicalConfiguration>
             //Then apply it to the current thing
             ApplyConfig(args);
-            Print("Loaded the \"" + args + "\" graphical preset.", ColorType.Success);
         }
 
         public static List<string> GetPresets()
@@ -546,6 +543,12 @@ namespace GraphicsConfig
         {
             try
             {
+                //PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
+                if (!File.Exists("graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json"))
+                {
+                    Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
+                    return false;
+                }
                 GraphicalConfiguration CurrentConfig = ReadGraphicalPreset(PresetName);
 
                 if (CurrentConfig == null) { return false; }
@@ -557,7 +560,7 @@ namespace GraphicsConfig
                     //Print("Loading/Setting " + property.Name);
                     ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
                 }
-                Print("Loaded " + PresetName);
+                Print("Loaded the \"" + PresetName + "\" graphical preset.", ColorType.Success);
                 return true;
             }
             catch (Exception e)

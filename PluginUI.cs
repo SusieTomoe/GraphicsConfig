@@ -9,14 +9,11 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Numerics;
-using TwitchLib.Api.Helix;
-using TwitchLib.Client.Models;
 using Veda;
 using Dalamud.Configuration;
 using static Lumina.Data.Files.Pcb.PcbListFile;
 using Dalamud.Interface.Utility.Raii;
 using System.Reflection.Emit;
-using Microsoft.Extensions.Primitives;
 using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.LayoutManager;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +37,7 @@ namespace GraphicsConfig
             List<string> Presets = new List<string>{ "None" };
             Presets.AddRange(Plugin.GetPresets());
 
-            ImGui.Text("Usage: Go to your System Settings -> Graphic Settings\nand set them how you'd like the preset to be, then use the\ncommands below to save and then load them whenever you like.");
+            ImGui.Text("Usage: Go to your System Settings -> Graphic Settings and set\nthem how you'd like the preset to be, hit apply, then use the\ncommands below to save and then load them whenever you like.");
             ImGui.Text("Saving a preset: \"/gsave PresetName\"\nLoading a preset: \"/gload PresetName\"\nListing presets: \"/glist\"\nOpen this window: \"/gconfig\"");
             ImGui.Text("The options below will enable the specified presets when the\ncondition begins (Like entering combat or a cutscene) and revert\nto the default preset after (like killing the enemy or finishing the\ncutscene). If you don't want to use a preset for any of these, just\nselect none for each condition.");
             
