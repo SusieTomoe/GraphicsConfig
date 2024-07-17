@@ -23,7 +23,6 @@ namespace GraphicsConfig
         public string Name => "GraphicsConfig";
 
         [PluginService] public static IDalamudPluginInterface PluginInterface { get; set; }
-        [PluginService] public static ICommandManager Commands { get; set; }
         [PluginService] public static IFramework Framework { get; set; }
         [PluginService] public static IChatGui Chat { get; set; }
         [PluginService] public static IPluginLog PluginLog { get; set; }
@@ -34,13 +33,7 @@ namespace GraphicsConfig
         private PluginCommandManager<Plugin> CommandManager;
         private PluginUI ui;
 
-        public static bool FirstRun = true;
-        public static bool BreakLoop = true;
-
-        public static readonly Queue<Func<bool>> actionQueue = new();
-        private readonly Stopwatch sw = new();
-        private static uint Delay = 0;
-        public static bool IsDebug = true;
+        public static bool IsDebug = false;
         public static readonly CancellationTokenSource BatteryCheckingTask = new();
         public static bool PreviouslyCharging = false;
 
@@ -68,14 +61,10 @@ namespace GraphicsConfig
             // Load all of our commands
             CommandManager = new PluginCommandManager<Plugin>(this, commands);
 
-            Framework.Update += OnFrameworkUpdate;
-
             conditions.ConditionChange += ConditionChanged;
 
             PreviouslyCharging = SystemPower.IsCharging;
 
-            //if (PluginConfig.UnpluggedPreset != "None")
-            //{
             Task.Run(async () =>
             {
                 while (!BatteryCheckingTask.Token.IsCancellationRequested)
@@ -85,7 +74,6 @@ namespace GraphicsConfig
                     await Task.Delay(5000, BatteryCheckingTask.Token);
                 }
             }, BatteryCheckingTask.Token);
-            //}
         }
 
         public static void CheckBattery()
@@ -356,45 +344,6 @@ namespace GraphicsConfig
                         }
                     }
                     break;
-            }
-        }
-
-        private void OnFrameworkUpdate(IFramework framework)
-        {
-            if (actionQueue.Count == 0)
-            {
-                if (sw.IsRunning) sw.Stop();
-                return;
-            }
-            if (!sw.IsRunning) sw.Restart();
-
-            if (Delay > 0)
-            {
-                Delay -= 1;
-                return;
-            }
-
-            if (sw.ElapsedMilliseconds > 3000)
-            {
-                actionQueue.Clear();
-                return;
-            }
-
-            try
-            {
-                var hasNext = actionQueue.TryPeek(out var next);
-                if (hasNext)
-                {
-                    if (next())
-                    {
-                        actionQueue.Dequeue();
-                        sw.Reset();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                PluginLog.Error($"Failed: {ex.ToString()}");
             }
         }
 

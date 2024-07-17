@@ -192,12 +192,6 @@ namespace GraphicsConfig
             {
                 tempList.Sort(2, tempList.Count - 2, StringComparer.InvariantCulture);
             }
-            //if (filter)
-            //{
-            //    ImGui.SetNextItemWidth(width);
-            //    ImGui.InputTextWithHint("##Filter" + label, "Filter..", ref filterTemp, 30);
-            //    tempList = tempList.Where(item => item.Contains(filterTemp, StringComparison.OrdinalIgnoreCase)).ToList();
-            //}
             var itemCount = tempList.Count;
             var height = ImGui.GetTextLineHeightWithSpacing() * Math.Min(itemCount + 1.5f, 8);
             height += itemCount > 0 ? -ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y - ImGui.GetStyle().FramePadding.Y : 0;
