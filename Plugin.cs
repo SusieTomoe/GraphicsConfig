@@ -84,10 +84,10 @@ namespace GraphicsConfig
                 if (!PreviouslyCharging)
                 {
                     //It is now charging, it was not before
-                    if (PluginConfig.DefaultPreset != "None")
+                    if (PluginConfig.DefaultPreset != "None" & PluginConfig.UnpluggedPreset != "None")
                     {
                         if (IsDebug) { Print("Default preset loaded because you plugged your device in"); }
-                        ApplyConfig(PluginConfig.DefaultPreset);
+                        ApplyConfig(PluginConfig.DefaultPreset, true);
                     }
                     PreviouslyCharging = SystemPower.IsCharging;
                 }
@@ -118,7 +118,7 @@ namespace GraphicsConfig
                     if (PluginConfig.UnpluggedPreset != "None")
                     {
                         if (IsDebug) { Print("Unplugged preset loaded because you unplugged your device"); }
-                        ApplyConfig(PluginConfig.UnpluggedPreset);
+                        ApplyConfig(PluginConfig.UnpluggedPreset, true);
                     }
                     PreviouslyCharging = SystemPower.IsCharging;
                 }
@@ -169,15 +169,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Flag started");
                         if (PluginConfig.InDutyPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.InDutyPreset);
+                            ApplyConfig(PluginConfig.InDutyPreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Flag ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.InDutyPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -204,15 +204,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Flag started");
                         if (PluginConfig.CraftingPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.CraftingPreset);
+                            ApplyConfig(PluginConfig.CraftingPreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Flag ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.CraftingPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -223,15 +223,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Flag started");
                         if (PluginConfig.EditingCharacterPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.EditingCharacterPreset);
+                            ApplyConfig(PluginConfig.EditingCharacterPreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Flag ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.EditingCharacterPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -257,15 +257,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Flag started");
                         if (PluginConfig.GatheringPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.GatheringPreset);
+                            ApplyConfig(PluginConfig.GatheringPreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Flag ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.GatheringPreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -278,15 +278,15 @@ namespace GraphicsConfig
                             if (IsDebug) Print("Flag started");
                             if (PluginConfig.CombatPreset != "None")
                             {
-                                ApplyConfig(PluginConfig.CombatPreset);
+                                ApplyConfig(PluginConfig.CombatPreset, true);
                             }
                         }
                         else
                         {
                             if (IsDebug) Print("Flag ended");
-                            if (PluginConfig.DefaultPreset != "None")
+                            if (PluginConfig.DefaultPreset != "None" & PluginConfig.CombatPreset != "None")
                             {
-                                ApplyConfig(PluginConfig.DefaultPreset);
+                                ApplyConfig(PluginConfig.DefaultPreset, true);
                             }
                         }
                     }
@@ -311,15 +311,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Flag started");
                         if (PluginConfig.PerformancePreset != "None")
                         {
-                            ApplyConfig(PluginConfig.PerformancePreset);
+                            ApplyConfig(PluginConfig.PerformancePreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Flag ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.PerformancePreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -332,15 +332,15 @@ namespace GraphicsConfig
                         if (IsDebug) Print("Cutscene started");
                         if (PluginConfig.WatchingCutscenePreset != "None")
                         {
-                            ApplyConfig(PluginConfig.WatchingCutscenePreset);
+                            ApplyConfig(PluginConfig.WatchingCutscenePreset, true);
                         }
                     }
                     else
                     {
                         if (IsDebug) Print("Cutscene ended");
-                        if (PluginConfig.DefaultPreset != "None")
+                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.WatchingCutscenePreset != "None")
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset);
+                            ApplyConfig(PluginConfig.DefaultPreset, true);
                         }
                     }
                     break;
@@ -488,7 +488,7 @@ namespace GraphicsConfig
             Chat.Print(BuildSeString("Graphics Config", Message, ColorType));
         }
 
-        public static bool ApplyConfig(string PresetName)
+        public static bool ApplyConfig(string PresetName, bool Silent = false)
         {
             try
             {
@@ -509,7 +509,7 @@ namespace GraphicsConfig
                     //Print("Loading/Setting " + property.Name);
                     ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
                 }
-                Print("Loaded the \"" + PresetName + "\" graphical preset.", ColorType.Success);
+                if (!Silent) { Print("Loaded the \"" + PresetName + "\" graphical preset.", ColorType.Success); }
                 return true;
             }
             catch (Exception e)
