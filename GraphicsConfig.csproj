@@ -26,14 +26,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="PluginWindow.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="packages.lock.json" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="DalamudPackager" Version="2.1.13" />
     <Reference Include="FFXIVClientStructs">
       <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
