@@ -12,13 +12,6 @@
     "config",
     "aida"
   ],
-  "CategoryTags": null,
   "DalamudApiLevel": 10,
-  "LoadPriority": 0,
-  "LastUpdate": 0,
-  "DownloadLinkInstall": null,
-  "DownloadLinkUpdate": null,
-  "DownloadLinkTesting": null,
-  "ImageUrls": null,
   "IconUrl": "https://i.imgur.com/vda2BRM.png"
 }
