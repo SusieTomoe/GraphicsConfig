@@ -1,25 +1,12 @@
-﻿using Dalamud.Game.ClientState.Party;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
-using Dalamud.Game;
-using Dalamud.Plugin;
+﻿using Dalamud.Interface.Utility.Raii;
 using ImGuiNET;
-using ImGuiScene;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net;
+using System.Globalization;
+using System.Linq;
 using System.Numerics;
 using Veda;
-using Dalamud.Configuration;
-using static Lumina.Data.Files.Pcb.PcbListFile;
-using Dalamud.Interface.Utility.Raii;
-using System.Reflection.Emit;
-using static FFXIVClientStructs.FFXIV.Client.LayoutEngine.LayoutManager;
-using System.Collections.Generic;
-using System.Linq;
-using System.Globalization;
-using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
-using Lumina.Excel.GeneratedSheets;
 
 namespace GraphicsConfig
 {
@@ -34,61 +21,61 @@ namespace GraphicsConfig
             if (!IsVisible || !ImGui.Begin("Graphics Config", ref IsVisible, ImGuiWindowFlags.AlwaysAutoResize))
                 return;
 
-            List<string> Presets = new List<string>{ "None" };
+            List<string> Presets = new List<string> { "None" };
             Presets.AddRange(Plugin.GetPresets());
 
             ImGui.Text("Usage: Go to your System Settings -> Graphic Settings and set\nthem how you'd like the preset to be, hit apply, then use the\ncommands below to save and then load them whenever you like.");
             ImGui.Text("Saving a preset: \"/gsave PresetName\"\nLoading a preset: \"/gload PresetName\"\nListing presets: \"/glist\"\nOpen this window: \"/gconfig\"");
             ImGui.Text("The options below will enable the specified presets when the\ncondition begins (Like entering combat or a cutscene) and revert\nto the default preset after (like killing the enemy or finishing the\ncutscene). If you don't want to use a preset for any of these, just\nselect none for each condition.");
-            
+
             ImGui.Text("Default:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("DefaultPreset", Plugin.PluginConfig.DefaultPreset, 200, out Plugin.PluginConfig.DefaultPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("In Duty:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("InDutyPreset", Plugin.PluginConfig.InDutyPreset, 200, out Plugin.PluginConfig.InDutyPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Crafting:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("CraftingPreset", Plugin.PluginConfig.CraftingPreset, 200, out Plugin.PluginConfig.CraftingPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Editing Character:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("EditingCharacterPreset", Plugin.PluginConfig.EditingCharacterPreset, 200, out Plugin.PluginConfig.EditingCharacterPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Gathering:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("GatheringPreset", Plugin.PluginConfig.GatheringPreset, 200, out Plugin.PluginConfig.GatheringPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("In Combat:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("CombatPreset", Plugin.PluginConfig.CombatPreset, 200, out Plugin.PluginConfig.CombatPreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Bard Performance:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("PerformancePreset", Plugin.PluginConfig.PerformancePreset, 200, out Plugin.PluginConfig.PerformancePreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Cutscene or Gpose:");
             ImGui.SameLine();
             ImGui.Indent(200);
             DrawComboBox("WatchingCutscenePreset", Plugin.PluginConfig.WatchingCutscenePreset, 200, out Plugin.PluginConfig.WatchingCutscenePreset, Presets);
             ImGui.Unindent(200);
-            
+
             ImGui.Text("Device unplugged:");
             ImGui.SameLine();
             ImGui.Indent(200);
@@ -97,19 +84,26 @@ namespace GraphicsConfig
 
             if (!Plugin.PluginConfig.SavedOnce)
             {
-
                 ImGui.Text("Once you hit save, this window will no longer pop up when you\nenable the plugin, and you can bring it back by typing /gconfig.");
             }
-
+            ImGui.Text("You can modify, share, or rename your presets by adjusting the\nfiles in the \"graphical-presets\" folder in the FFXIV game folder,\naccessible by clicking the \"Open preset folder\" button below:");
             if (ImGui.Button("Save"))
             {
                 Plugin.PluginConfig.Save();
                 this.IsVisible = false;
                 Plugin.PluginConfig.SavedOnce = true;
             }
-
             ImGui.SameLine();
-            ImGui.Indent(200);
+            if (ImGui.Button("Open preset folder"))
+            {
+                ProcessStartInfo ps = new();
+                ps.FileName = Environment.CurrentDirectory + "\\graphical-presets\\";
+                ps.UseShellExecute = true;
+                ps.WindowStyle = ProcessWindowStyle.Normal;
+                Process.Start(ps);
+            }
+            ImGui.SameLine();
+            //ImGui.Indent(200);
 
             if (ImGui.Button("Want to help support my work?"))
             {
