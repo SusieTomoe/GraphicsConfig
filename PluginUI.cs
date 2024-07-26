@@ -182,7 +182,7 @@ namespace GraphicsConfig
                 return;
             }
             var tempList = list.Select(item => item.ToString()!).ToList();
-            if (tempList.Count > 0)
+            if (tempList.Count > 1)
             {
                 tempList.Sort(2, tempList.Count - 2, StringComparer.InvariantCulture);
             }
