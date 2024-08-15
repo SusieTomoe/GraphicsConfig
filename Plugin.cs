@@ -163,7 +163,6 @@ namespace GraphicsConfig
                 case ConditionFlag.BoundByDuty:
                 case ConditionFlag.BoundByDuty56:
                 case ConditionFlag.BoundByDuty95:
-                case ConditionFlag.BoundToDuty97:
                     if (value)
                     {
                         if (IsDebug) Print("Flag started");
