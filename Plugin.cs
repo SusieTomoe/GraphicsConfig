@@ -326,20 +326,23 @@ namespace GraphicsConfig
                 case ConditionFlag.WatchingCutscene:
                 case ConditionFlag.WatchingCutscene78:
                 case ConditionFlag.OccupiedInCutSceneEvent:
-                    if (value)
+                    if (!Condition[ConditionFlag.BoundByDuty] && !Condition[ConditionFlag.BoundByDuty56] && !Condition[ConditionFlag.BoundByDuty95])
                     {
-                        if (IsDebug) Print("Cutscene started");
-                        if (PluginConfig.WatchingCutscenePreset != "None")
+                        if (value)
                         {
-                            ApplyConfig(PluginConfig.WatchingCutscenePreset, true);
+                            if (IsDebug) Print("Cutscene started");
+                            if (PluginConfig.WatchingCutscenePreset != "None")
+                            {
+                                ApplyConfig(PluginConfig.WatchingCutscenePreset, true);
+                            }
                         }
-                    }
-                    else
-                    {
-                        if (IsDebug) Print("Cutscene ended");
-                        if (PluginConfig.DefaultPreset != "None" & PluginConfig.WatchingCutscenePreset != "None")
+                        else
                         {
-                            ApplyConfig(PluginConfig.DefaultPreset, true);
+                            if (IsDebug) Print("Cutscene ended");
+                            if (PluginConfig.DefaultPreset != "None" & PluginConfig.WatchingCutscenePreset != "None")
+                            {
+                                ApplyConfig(PluginConfig.DefaultPreset, true);
+                            }
                         }
                     }
                     break;
