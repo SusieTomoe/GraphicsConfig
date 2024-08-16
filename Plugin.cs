@@ -195,9 +195,6 @@ namespace GraphicsConfig
                 //    break;
 
                 case ConditionFlag.Crafting:
-                case ConditionFlag.Crafting40:
-                case ConditionFlag.PreparingToCraft:
-
                     if (value)
                     {
                         if (IsDebug) Print("Flag started");
