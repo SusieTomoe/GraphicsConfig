@@ -10,6 +10,51 @@ namespace GraphicsConfig.Classes
 {
     public class GraphicalConfiguration
     {
+        /*
+           _____ _____  _____ _____  _           __     __    _____ ______ _______ _______ _____ _   _  _____  _____ 
+          |  __ \_   _|/ ____|  __ \| |        /\\ \   / /   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+          | |  | || | | (___ | |__) | |       /  \\ \_/ /   | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+          | |  | || |  \___ \|  ___/| |      / /\ \\   /     \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+          | |__| || |_ ____) | |    | |____ / ____ \| |      ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+          |_____/_____|_____/|_|    |______/_/    \_\_|     |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/  
+         */
+
+        // This is not a mistake, they are reversed internally, I think Borderless was added later?
+        /// <summary>
+        /// Screen Mode ->
+        /// 0: Windowed
+        /// 1: Borderless Windowed
+        /// 2: Full Screen
+        /// </summary>
+        public uint ScreenMode { get; set; }
+
+        /// <summary>
+        /// Resolution -> Custom Width
+        /// </summary>
+        public uint ScreenWidth { get; set; }
+
+        /// <summary>
+        /// Resolution -> Custom Height
+        /// </summary>
+        public uint ScreenHeight { get; set; }
+
+        /// <summary>
+        /// Frame Rate ->
+        /// 0: None
+        /// 1: "Main Display Refresh Rate"
+        /// 2: 60 fps
+        /// 3: 30 fps
+        /// </summary>
+        public uint Fps { get; set; }
+
+        /*   _____ _____            _____  _    _ _____ _____  _____     _____ ______ _______ _______ _____ _   _  _____  ____ 
+            / ____|  __ \     /\   |  __ \| |  | |_   _/ ____|/ ____|   / ____|  ____|__   __|__   __|_   _| \ | |/ ____|/ ____|
+           | |  __| |__) |   /  \  | |__) | |__| | | || |    | (___    | (___ | |__     | |     | |    | | |  \| | |  __| (___  
+           | | |_ |  _  /   / /\ \ |  ___/|  __  | | || |     \___ \    \___ \|  __|    | |     | |    | | | . ` | | |_ |\___ \ 
+           | |__| | | \ \  / ____ \| |    | |  | |_| || |____ ____) |   ____) | |____   | |     | |   _| |_| |\  | |__| |____) |
+            \_____|_|  \_\/_/    \_\_|    |_|  |_|_____\_____|_____/   |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/ 
+        */
+
         /// <summary>
         /// UI Resolution Settings -> UI Resolution ※Requires reboot.
         /// </summary>

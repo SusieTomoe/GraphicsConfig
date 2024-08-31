@@ -27,6 +27,7 @@ namespace GraphicsConfig
             ImGui.Text("Usage: Go to your System Settings -> Graphic Settings and set\nthem how you'd like the preset to be, hit apply, then use the\ncommands below to save and then load them whenever you like.");
             ImGui.Text("Saving a preset: \"/gsave PresetName\"\nLoading a preset: \"/gload PresetName\"\nListing presets: \"/glist\"\nOpen this window: \"/gconfig\"");
             ImGui.Text("The options below will enable the specified presets when the\ncondition begins (Like entering combat or a cutscene) and revert\nto the default preset after (like killing the enemy or finishing the\ncutscene). If you don't want to use a preset for any of these, just\nselect none for each condition.");
+            ImGui.Text("※ Please note that while most settings will change instantly on\nload, Screen Mode and Resolution will not. These will be saved\nand loaded, but not take effect until you manually open the\nSystem Config menu, change something, and hit apply. Sorry!");
 
             ImGui.Text("Default:");
             ImGui.SameLine();
@@ -103,7 +104,6 @@ namespace GraphicsConfig
                 Process.Start(ps);
             }
             ImGui.SameLine();
-            //ImGui.Indent(200);
 
             if (ImGui.Button("Want to help support my work?"))
             {
@@ -113,8 +113,7 @@ namespace GraphicsConfig
 
             if (ShowSupport)
             {
-                ImGui.Indent(-200);
-                ImGui.Text("Here are the current ways you can support the work I do.\nEvery bit helps, thank you! Have a great day!");
+                ImGui.Text("Here are the current ways you can support the work I do.\nEvery bit helps, thank you! ♥ Have a great day!");
                 ImGui.PushStyleColor(ImGuiCol.Button, new System.Numerics.Vector4(0.19f, 0.52f, 0.27f, 1));
                 if (ImGui.Button("Donate via Paypal"))
                 {

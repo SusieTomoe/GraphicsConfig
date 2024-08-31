@@ -1,5 +1,6 @@
 ﻿using BatteryGauge.Battery;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Config;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -64,6 +65,7 @@ namespace GraphicsConfig
             conditions.ConditionChange += ConditionChanged;
 
             PreviouslyCharging = SystemPower.IsCharging;
+            //GameConfig.Changed += ConfigChange;
 
             Task.Run(async () =>
             {
@@ -75,6 +77,16 @@ namespace GraphicsConfig
                 }
             }, BatteryCheckingTask.Token);
         }
+
+        //public void ConfigChange(object? sender, ConfigChangeEvent e)
+        //{
+        //    if (e.Option.ToString() != "CameraZoom" && e.Option.ToString() != "ChatType")
+        //    {
+        //        Chat.Print("Setting: " + e.Option.ToString());
+        //        GameConfig.System.TryGetUInt(e.Option.ToString(), out uint TestVariable);
+        //        Chat.Print("Changed to: " + TestVariable.ToString());
+        //    }
+        //}
 
         public static void CheckBattery()
         {
@@ -143,7 +155,6 @@ namespace GraphicsConfig
 
         public void ConditionChanged(ConditionFlag flag, bool value)
         {
-            //return
             //Have a string option that stores the name of the preset to use in each case (or "none" for don't change it)
             //Have a dropbox next to each condition that lists the current presets
             switch (flag)
@@ -377,7 +388,7 @@ namespace GraphicsConfig
             if (args.ToLower() == "none") { Print("You cannot name a preset that. Stop trying to break the plugin. >:|", ColorType.Error); return; }
             args = System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(args.ToLower());
             if (String.IsNullOrWhiteSpace(args)) { Chat.PrintError("Error: Please provide a filename for the preset."); return; }
-            //Get the current settings and save it to a JSON, overwriting if they specify /y or something
+            //Get the current settings and save it to a JSON
             WriteGraphicalPreset(args);
             Print("Saved the \"" + args + "\" graphical preset.", ColorType.Success);
         }
@@ -451,7 +462,6 @@ namespace GraphicsConfig
                 string NewJSON = JsonConvert.SerializeObject(CurrentConfig, Newtonsoft.Json.Formatting.Indented);
 
                 System.IO.File.WriteAllText(PresetName, NewJSON);
-                //Chat.Print("[Graphics Config] Preset saved as \"" + PresetName + "\".");
                 return true;
             }
             catch (Exception f)
@@ -491,7 +501,6 @@ namespace GraphicsConfig
         {
             try
             {
-                //PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
                 if (!File.Exists("graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json"))
                 {
                     Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
