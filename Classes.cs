@@ -19,15 +19,6 @@ namespace GraphicsConfig.Classes
           |_____/_____|_____/|_|    |______/_/    \_\_|     |_____/|______|  |_|     |_|  |_____|_| \_|\_____|_____/  
          */
 
-        // This is not a mistake, they are reversed internally, I think Borderless was added later?
-        /// <summary>
-        /// Screen Mode ->
-        /// 0: Windowed
-        /// 1: Borderless Windowed
-        /// 2: Full Screen
-        /// </summary>
-        public uint ScreenMode { get; set; }
-
         /// <summary>
         /// Resolution -> Custom Width
         /// </summary>
@@ -37,6 +28,16 @@ namespace GraphicsConfig.Classes
         /// Resolution -> Custom Height
         /// </summary>
         public uint ScreenHeight { get; set; }
+
+        // This is put second (reverse order of the UI) so that we can detect if it's an old config via ScreenWidth/Height which get loaded first
+        // This is not a mistake, they are reversed internally, I think Borderless was added later?
+        /// <summary>
+        /// Screen Mode ->
+        /// 0: Windowed
+        /// 1: Borderless Windowed
+        /// 2: Full Screen
+        /// </summary>
+        public uint ScreenMode { get; set; }
 
         /// <summary>
         /// Frame Rate ->

@@ -1,6 +1,6 @@
 ﻿using BatteryGauge.Battery;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.Config;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -8,7 +8,6 @@ using GraphicsConfig.Classes;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -29,14 +28,15 @@ namespace GraphicsConfig
         [PluginService] public static IPluginLog PluginLog { get; set; }
         [PluginService] public static IGameConfig GameConfig { get; set; }
         [PluginService] public static ICondition Condition { get; set; }
+        [PluginService] public static INotificationManager NotificationManager { get; set; }
 
         public static Configuration PluginConfig { get; set; }
         private PluginCommandManager<Plugin> CommandManager;
         private PluginUI ui;
 
-        public static bool IsDebug = false;
         public static readonly CancellationTokenSource BatteryCheckingTask = new();
         public static bool PreviouslyCharging = false;
+        public static Notification NotifObject = new Notification();
 
         public Plugin(IDalamudPluginInterface pluginInterface, IChatGui chat, IPartyList partyList, ICommandManager commands, ICondition conditions)
         {
@@ -98,7 +98,7 @@ namespace GraphicsConfig
                     //It is now charging, it was not before
                     if (PluginConfig.DefaultPreset != "None" & PluginConfig.UnpluggedPreset != "None")
                     {
-                        if (IsDebug) { Print("Default preset loaded because you plugged your device in"); }
+                        if (PluginConfig.IsDebug) { Print("Default preset loaded because you plugged your device in"); }
                         ApplyConfig(PluginConfig.DefaultPreset, true);
                     }
                     PreviouslyCharging = SystemPower.IsCharging;
@@ -129,7 +129,7 @@ namespace GraphicsConfig
                     //It is now unplugged, it was not before
                     if (PluginConfig.UnpluggedPreset != "None")
                     {
-                        if (IsDebug) { Print("Unplugged preset loaded because you unplugged your device"); }
+                        if (PluginConfig.IsDebug) { Print("Unplugged preset loaded because you unplugged your device"); }
                         ApplyConfig(PluginConfig.UnpluggedPreset, true);
                     }
                     PreviouslyCharging = SystemPower.IsCharging;
@@ -176,7 +176,7 @@ namespace GraphicsConfig
                 case ConditionFlag.BoundByDuty95:
                     if (value)
                     {
-                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.IsDebug) Print("Flag started");
                         if (PluginConfig.InDutyPreset != "None")
                         {
                             ApplyConfig(PluginConfig.InDutyPreset, true);
@@ -184,7 +184,7 @@ namespace GraphicsConfig
                     }
                     else
                     {
-                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.IsDebug) Print("Flag ended");
                         if (PluginConfig.DefaultPreset != "None" & PluginConfig.InDutyPreset != "None")
                         {
                             ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -208,7 +208,7 @@ namespace GraphicsConfig
                 case ConditionFlag.Crafting:
                     if (value)
                     {
-                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.IsDebug) Print("Flag started");
                         if (PluginConfig.CraftingPreset != "None")
                         {
                             ApplyConfig(PluginConfig.CraftingPreset, true);
@@ -216,7 +216,7 @@ namespace GraphicsConfig
                     }
                     else
                     {
-                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.IsDebug) Print("Flag ended");
                         if (PluginConfig.DefaultPreset != "None" & PluginConfig.CraftingPreset != "None")
                         {
                             ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -227,7 +227,7 @@ namespace GraphicsConfig
                 case ConditionFlag.CreatingCharacter: //Does this include with Fantasia?
                     if (value)
                     {
-                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.IsDebug) Print("Flag started");
                         if (PluginConfig.EditingCharacterPreset != "None")
                         {
                             ApplyConfig(PluginConfig.EditingCharacterPreset, true);
@@ -235,7 +235,7 @@ namespace GraphicsConfig
                     }
                     else
                     {
-                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.IsDebug) Print("Flag ended");
                         if (PluginConfig.DefaultPreset != "None" & PluginConfig.EditingCharacterPreset != "None")
                         {
                             ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -261,7 +261,7 @@ namespace GraphicsConfig
                 case ConditionFlag.Gathering42:
                     if (value)
                     {
-                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.IsDebug) Print("Flag started");
                         if (PluginConfig.GatheringPreset != "None")
                         {
                             ApplyConfig(PluginConfig.GatheringPreset, true);
@@ -269,7 +269,7 @@ namespace GraphicsConfig
                     }
                     else
                     {
-                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.IsDebug) Print("Flag ended");
                         if (PluginConfig.DefaultPreset != "None" & PluginConfig.GatheringPreset != "None")
                         {
                             ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -282,7 +282,7 @@ namespace GraphicsConfig
                     {
                         if (value)
                         {
-                            if (IsDebug) Print("Flag started");
+                            if (PluginConfig.IsDebug) Print("Flag started");
                             if (PluginConfig.CombatPreset != "None")
                             {
                                 ApplyConfig(PluginConfig.CombatPreset, true);
@@ -290,7 +290,7 @@ namespace GraphicsConfig
                         }
                         else
                         {
-                            if (IsDebug) Print("Flag ended");
+                            if (PluginConfig.IsDebug) Print("Flag ended");
                             if (PluginConfig.DefaultPreset != "None" & PluginConfig.CombatPreset != "None")
                             {
                                 ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -315,7 +315,7 @@ namespace GraphicsConfig
                 case ConditionFlag.Performing: //Bard Performance
                     if (value)
                     {
-                        if (IsDebug) Print("Flag started");
+                        if (PluginConfig.IsDebug) Print("Flag started");
                         if (PluginConfig.PerformancePreset != "None")
                         {
                             ApplyConfig(PluginConfig.PerformancePreset, true);
@@ -323,7 +323,7 @@ namespace GraphicsConfig
                     }
                     else
                     {
-                        if (IsDebug) Print("Flag ended");
+                        if (PluginConfig.IsDebug) Print("Flag ended");
                         if (PluginConfig.DefaultPreset != "None" & PluginConfig.PerformancePreset != "None")
                         {
                             ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -338,7 +338,7 @@ namespace GraphicsConfig
                     {
                         if (value)
                         {
-                            if (IsDebug) Print("Cutscene started");
+                            if (PluginConfig.IsDebug) Print("Cutscene started");
                             if (PluginConfig.WatchingCutscenePreset != "None")
                             {
                                 ApplyConfig(PluginConfig.WatchingCutscenePreset, true);
@@ -346,7 +346,7 @@ namespace GraphicsConfig
                         }
                         else
                         {
-                            if (IsDebug) Print("Cutscene ended");
+                            if (PluginConfig.IsDebug) Print("Cutscene ended");
                             if (PluginConfig.DefaultPreset != "None" & PluginConfig.WatchingCutscenePreset != "None")
                             {
                                 ApplyConfig(PluginConfig.DefaultPreset, true);
@@ -362,6 +362,14 @@ namespace GraphicsConfig
         public void ShowTwitchOptions(string command, string args)
         {
             ui.IsVisible = !ui.IsVisible;
+        }
+
+        [Command("/gdebug")]
+        [HelpMessage("Toggle debug mode on/off (mainly for developers)")]
+        public void ToggleDebugMode(string command, string args)
+        {
+            PluginConfig.IsDebug = !PluginConfig.IsDebug;
+            Print("Debug mode is now set to " + PluginConfig.IsDebug);
         }
 
         [Command("/glist")]
@@ -501,6 +509,7 @@ namespace GraphicsConfig
         {
             try
             {
+                bool OldConfig = false;
                 if (!File.Exists("graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json"))
                 {
                     Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
@@ -514,10 +523,37 @@ namespace GraphicsConfig
 
                 foreach (PropertyInfo property in properties)
                 {
-                    //Print("Loading/Setting " + property.Name);
-                    ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
+                    if (PluginConfig.IsDebug)
+                    {
+                        Print("Loading/Setting " + property.Name + " | Value is set to:" + property.GetValue(CurrentConfig) + " | uint: " + (uint)property.GetValue(CurrentConfig));
+                    }
+                    if (!OldConfig & ((property.Name.ToLower() == "screenwidth" & (uint)property.GetValue(CurrentConfig) == 0) | (property.Name.ToLower() == "screenheight" & (uint)property.GetValue(CurrentConfig) == 0))) 
+                    {
+                        OldConfig = true;
+                        Print("\"" + PresetName + "\" is an older Graphics Config preset - Please load it and re-save it order to avoid any possible issues.", ColorType.Warn);
+                    }
+                    if (OldConfig)
+                    {
+                        if (property.Name.ToLower() == "screenwidth" | property.Name.ToLower() == "screenheight" | property.Name.ToLower() == "screenmode")
+                        { 
+                            //Do nothing
+                        }
+                        ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
+                    }
+                    else
+                    {
+                        ApplySetting(property.Name, (uint)property.GetValue(CurrentConfig));
+                    }
                 }
                 if (!Silent) { Print("Loaded the \"" + PresetName + "\" graphical preset.", ColorType.Success); }
+                if (PluginConfig.IsDebug)
+                {
+                    NotifObject.Title = "Graphics Config";
+                    NotifObject.Content = "[Debug] Loaded the \"" + PresetName + "\" graphical preset.";
+                    NotifObject.Type = NotificationType.Info;
+                    NotificationManager.AddNotification(NotifObject).Minimized = false;
+                    Print("Loaded the \"" + PresetName + "\" graphical preset.", ColorType.Success);
+                }
                 return true;
             }
             catch (Exception e)

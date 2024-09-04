@@ -18,6 +18,7 @@ namespace GraphicsConfig
         public string WatchingCutscenePreset = "None";
         public string UnpluggedPreset = "None";
         public bool SavedOnce = false;
+        public bool IsDebug = false;
 
         private IDalamudPluginInterface pluginInterface;
 
