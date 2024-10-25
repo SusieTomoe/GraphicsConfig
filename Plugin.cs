@@ -14,7 +14,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Veda;
-using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.MeshPCB;
 using static Veda.Functions;
 
 namespace GraphicsConfig
