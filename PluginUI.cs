@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Veda;
@@ -87,7 +88,7 @@ namespace GraphicsConfig
             {
                 ImGui.Text("Once you hit save, this window will no longer pop up when you\nenable the plugin, and you can bring it back by typing /gconfig.");
             }
-            ImGui.Text("You can modify, share, or rename your presets by adjusting the\nfiles in the \"graphical-presets\" folder in the FFXIV game folder,\naccessible by clicking the \"Open preset folder\" button below:");
+            ImGui.Text("You can modify, share, or rename your presets by adjusting the\nfiles in the \"graphical-presets\" folder in the PluginsConfig,\naccessible by clicking the \"Open preset folder\" button below:");
             if (ImGui.Button("Save"))
             {
                 Plugin.PluginConfig.Save();
@@ -98,7 +99,7 @@ namespace GraphicsConfig
             if (ImGui.Button("Open preset folder"))
             {
                 ProcessStartInfo ps = new();
-                ps.FileName = Environment.CurrentDirectory + "\\graphical-presets\\";
+                ps.FileName = Path.Combine(Plugin.PluginInterface.ConfigDirectory.FullName, "graphical-presets");
                 ps.UseShellExecute = true;
                 ps.WindowStyle = ProcessWindowStyle.Normal;
                 Process.Start(ps);

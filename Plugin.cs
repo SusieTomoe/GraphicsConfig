@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Veda;
+using static FFXIVClientStructs.FFXIV.Common.Component.BGCollision.MeshPCB;
 using static Veda.Functions;
 
 namespace GraphicsConfig
@@ -57,7 +58,32 @@ namespace GraphicsConfig
 
             ui.IsVisible = !PluginConfig.SavedOnce;
 
-            if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
+            string PresetDirectory = Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets");
+
+            if (Directory.Exists("graphical-presets") & !Directory.Exists(PresetDirectory))
+            {
+                try
+                {
+                    Directory.CreateDirectory(PresetDirectory);
+                    string[] PresetFiles = System.IO.Directory.GetFiles("graphical-presets");
+
+                    // Copy the files and overwrite destination files if they already exist.
+                    foreach (string s in PresetFiles)
+                    {
+                        // Use static Path methods to extract only the file name from the path.
+                        string Filename = System.IO.Path.GetFileName(s);
+                        string DestinationFile = System.IO.Path.Combine(PresetDirectory, Filename);
+                        System.IO.File.Copy(s, DestinationFile, true);
+                    }
+                    Print("The graphical presets folder has been moved to the PluginConfig directory. Any existing files were automatically copied to the new folder. No action is needed on your part.", ColorType.Warn);
+                }
+                catch (Exception f)
+                {
+                    Chat.Print("Something went wrong with moving your presets to the new folder! Error: " + f.ToString());
+                }
+
+            }
+            if (!Directory.Exists(PresetDirectory)) { Directory.CreateDirectory(PresetDirectory); }
 
             // Load all of our commands
             CommandManager = new PluginCommandManager<Plugin>(this, commands);
@@ -415,7 +441,7 @@ namespace GraphicsConfig
 
         public static List<string> GetPresets()
         {
-            FileInfo[] Files = new DirectoryInfo(@"graphical-presets").GetFiles("*.json", SearchOption.TopDirectoryOnly); //Assuming Test is your Folder
+            FileInfo[] Files = new DirectoryInfo(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets")).GetFiles("*.json", SearchOption.TopDirectoryOnly); //Assuming Test is your Folder
             List<string> presets = new List<string>();
             foreach (FileInfo File in Files)
             {
@@ -438,7 +464,7 @@ namespace GraphicsConfig
         {
             try
             {
-                if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
+                if (!Directory.Exists(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets"))) { Directory.CreateDirectory(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets")); }
                 PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
                 if (!File.Exists(PresetName))
                 {
@@ -463,7 +489,7 @@ namespace GraphicsConfig
         {
             try
             {
-                if (!Directory.Exists("graphical-presets")) { Directory.CreateDirectory("graphical-presets"); }
+                if (!Directory.Exists(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets"))) { Directory.CreateDirectory(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets")); }
                 PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
 
                 GraphicalConfiguration CurrentConfig = GetCurrentConfig();
