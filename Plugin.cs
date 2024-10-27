@@ -401,7 +401,7 @@ namespace GraphicsConfig
         [HelpMessage("List all graphical presets")]
         public unsafe void ListPresets(string command, string args)
         {
-            string FinalMessage = "Available presets saved on your device:" + Environment.NewLine;
+            string FinalMessage = "Available presets saved on your device: ";
             if (GetPresets().Count() == 0)
             {
                 Print("You don't have any presets! Type \"/gsave PresetName\" to save one.", ColorType.Info);
@@ -464,7 +464,7 @@ namespace GraphicsConfig
             try
             {
                 if (!Directory.Exists(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets"))) { Directory.CreateDirectory(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets")); }
-                PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
+                PresetName = Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets") + "\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
                 if (!File.Exists(PresetName))
                 {
                     Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
@@ -489,7 +489,7 @@ namespace GraphicsConfig
             try
             {
                 if (!Directory.Exists(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets"))) { Directory.CreateDirectory(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets")); }
-                PresetName = "graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
+                PresetName = Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets") + "\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json";
 
                 GraphicalConfiguration CurrentConfig = GetCurrentConfig();
                 string NewJSON = JsonConvert.SerializeObject(CurrentConfig, Newtonsoft.Json.Formatting.Indented);
@@ -535,7 +535,7 @@ namespace GraphicsConfig
             try
             {
                 bool OldConfig = false;
-                if (!File.Exists("graphical-presets\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json"))
+                if (!File.Exists(Path.Combine(PluginInterface.ConfigDirectory.FullName, "graphical-presets") + "\\" + System.Globalization.CultureInfo.CurrentCulture.TextInfo.ToTitleCase(PresetName.ToLower()) + ".json"))
                 {
                     Print("Couldn't find a graphical preset named \"" + PresetName + "\".", ColorType.Warn);
                     return false;
